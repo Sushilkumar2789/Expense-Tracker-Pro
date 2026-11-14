@@ -1,0 +1,664 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Expense Tracker Pro</title>
+<style>
+:root{
+ --bg:#f1f5f9;
+ --card:#ffffff;
+ --text:#172033;
+ --muted:#64748b;
+ --primary:#4f46e5;
+ --green:#059669;
+ --red:#dc2626;
+}
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:var(--bg);
+ color:var(--text);
+ font-family:Arial,sans-serif;
+}
+header{
+ background:linear-gradient(120deg,#0f172a,#4338ca);
+ color:white;
+ padding:32px 16px;
+ text-align:center;
+}
+header h1{margin:0 0 8px}
+header p{margin:0;color:#c7d2fe}
+main{
+ max-width:1000px;
+ margin:25px auto;
+ padding:0 14px;
+}
+.card{
+ background:var(--card);
+ padding:22px;
+ border-radius:16px;
+ margin-bottom:20px;
+ box-shadow:0 4px 18px #0000000d;
+}
+h2{margin:0 0 18px;font-size:21px}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:12px;
+ margin-bottom:20px;
+}
+.stat{
+ background:white;
+ padding:18px;
+ border-radius:14px;
+ box-shadow:0 3px 12px #0000000a;
+}
+.stat small{color:var(--muted)}
+.stat h2{
+ margin:12px 0 0;
+ font-size:24px;
+ overflow-wrap:anywhere;
+}
+.green{color:var(--green)}
+.red{color:var(--red)}
+.purple{color:var(--primary)}
+label{
+ display:block;
+ margin:12px 0 5px;
+ font-weight:bold;
+ font-size:14px;
+}
+input,select{
+ width:100%;
+ padding:12px;
+ border:1px solid #cbd5e1;
+ border-radius:9px;
+ background:white;
+ font-size:15px;
+}
+button{
+ border:0;
+ border-radius:9px;
+ padding:12px 16px;
+ font-size:14px;
+ font-weight:bold;
+ cursor:pointer;
+}
+.primary{
+ background:var(--primary);
+ color:white;
+ width:100%;
+ margin-top:16px;
+}
+.danger{
+ background:#fee2e2;
+ color:#b91c1c;
+}
+.row{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+}
+.transaction{
+ border-bottom:1px solid #e2e8f0;
+ padding:14px 0;
+}
+.transaction:last-child{border:0}
+.transaction strong{
+ display:block;
+ overflow-wrap:anywhere;
+}
+.transaction small{
+ color:var(--muted);
+ display:block;
+ margin-top:5px;
+}
+.transaction button{
+ margin-top:8px;
+ padding:8px 12px;
+}
+.bar-bg{
+ height:14px;
+ background:#e2e8f0;
+ border-radius:20px;
+ overflow:hidden;
+ margin-top:12px;
+}
+.bar-fill{
+ height:100%;
+ background:var(--primary);
+ width:0%;
+ transition:width .3s;
+}
+.chart-row{margin:18px 0}
+.chart-label{
+ display:flex;
+ justify-content:space-between;
+ gap:10px;
+ font-size:14px;
+}
+.chart-label span{
+ overflow-wrap:anywhere;
+}
+.empty{
+ text-align:center;
+ color:var(--muted);
+ padding:18px;
+}
+.note{
+ color:var(--muted);
+ font-size:13px;
+ line-height:1.6;
+}
+footer{
+ text-align:center;
+ color:var(--muted);
+ padding:20px;
+}
+@media(max-width:600px){
+ .grid{grid-template-columns:1fr}
+ .card{padding:17px}
+ .stat h2{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>💰 Expense Tracker Pro</h1>
+<p>Track Money • Manage Budget • Save More</p>
+</header>
+
+<main>
+
+<div class="grid">
+<div class="stat">
+<small>Monthly Income</small>
+<h2 class="green" id="income">₹0</h2>
+</div>
+<div class="stat">
+<small>Monthly Expenses</small>
+<h2 class="red" id="expense">₹0</h2>
+</div>
+<div class="stat">
+<small>Monthly Balance</small>
+<h2 class="purple" id="balance">₹0</h2>
+</div>
+</div>
+
+<section class="card">
+<h2>📅 Select Month</h2>
+<input type="month" id="selectedMonth">
+<p class="note">
+Dashboard, transactions and charts use the selected month.
+</p>
+</section>
+
+<section class="card">
+<h2>➕ Add Transaction</h2>
+<form id="transactionForm">
+<label for="type">Transaction Type</label>
+<select id="type" required>
+<option value="expense">Expense</option>
+<option value="income">Income</option>
+</select>
+
+<label for="amount">Amount (₹)</label>
+<input type="number" id="amount"
+ min="0.01" max="1000000000"
+ step="0.01" placeholder="Enter amount" required>
+
+<label for="category">Category</label>
+<select id="category" required></select>
+
+<label for="description">Description</label>
+<input type="text" id="description"
+ maxlength="120" placeholder="Example: Grocery shopping">
+
+<label for="date">Date</label>
+<input type="date" id="date" required>
+
+<button class="primary" type="submit">
+Add Transaction
+</button>
+</form>
+</section>
+
+<section class="card">
+<h2>🎯 Monthly Budget</h2>
+<label for="budgetInput">Set Expense Budget (₹)</label>
+<input type="number" id="budgetInput"
+ min="0" max="1000000000"
+ step="0.01" placeholder="Example: 10000">
+
+<button class="primary" id="saveBudget">
+Save Budget
+</button>
+
+<div class="bar-bg">
+<div class="bar-fill" id="budgetBar"></div>
+</div>
+<p id="budgetText"></p>
+<p class="note" id="budgetStatus"></p>
+</section>
+
+<section class="card">
+<h2>📊 Expense Breakdown</h2>
+<div id="chart"></div>
+</section>
+
+<section class="card">
+<h2>📋 Transaction History</h2>
+<div id="transactionList"></div>
+</section>
+
+<section class="card">
+<h2>💾 Data Management</h2>
+<button class="primary" id="exportButton">
+Export Transactions (CSV)
+</button>
+<p class="note">
+Your data is stored locally in this browser.
+It does not automatically sync across devices.
+</p>
+<button class="danger" id="clearButton">
+Clear All Data
+</button>
+</section>
+
+</main>
+
+<footer>
+Expense Tracker Pro © 2026
+<br>
+Built with HTML, CSS and JavaScript
+</footer>
+
+<script>
+"use strict";
+
+const STORAGE_KEY="expense-tracker-pro-v1";
+
+const categories={
+ income:[
+  "Salary","Business","Freelance",
+  "Interest","Gift","Other"
+ ],
+ expense:[
+  "Food","Shopping","Transport",
+  "Bills","Education","Health",
+  "Entertainment","Rent","Other"
+ ]
+};
+
+const colors=[
+ "#4f46e5","#0891b2","#059669",
+ "#d97706","#db2777","#7c3aed",
+ "#ea580c","#64748b","#0d9488"
+];
+
+function $(id){
+ return document.getElementById(id);
+}
+
+function localDate(){
+ const d=new Date();
+ const y=d.getFullYear();
+ const m=String(d.getMonth()+1).padStart(2,"0");
+ const day=String(d.getDate()).padStart(2,"0");
+ return `${y}-${m}-${day}`;
+}
+
+function loadData(){
+ try{
+  const saved=JSON.parse(
+   localStorage.getItem(STORAGE_KEY)||"{}"
+  );
+  return {
+   transactions:Array.isArray(saved.transactions)
+    ?saved.transactions:[],
+   budgets:saved.budgets&&
+    typeof saved.budgets==="object"
+    ?saved.budgets:{}
+  };
+ }catch(e){
+  return {transactions:[],budgets:{}};
+ }
+}
+
+let data=loadData();
+
+function save(){
+ try{
+  localStorage.setItem(
+   STORAGE_KEY,JSON.stringify(data)
+  );
+  return true;
+ }catch(e){
+  alert("Storage is unavailable or full.");
+  return false;
+ }
+}
+
+function money(value){
+ return new Intl.NumberFormat("en-IN",{
+  style:"currency",
+  currency:"INR",
+  maximumFractionDigits:2
+ }).format(value);
+}
+
+$("date").value=localDate();
+$("selectedMonth").value=localDate().slice(0,7);
+
+function updateCategories(){
+ const type=$("type").value;
+ const select=$("category");
+ select.replaceChildren();
+
+ categories[type].forEach(name=>{
+  const option=document.createElement("option");
+  option.value=name;
+  option.textContent=name;
+  select.appendChild(option);
+ });
+}
+
+$("type").addEventListener(
+ "change",updateCategories
+);
+updateCategories();
+
+$("transactionForm").addEventListener(
+ "submit",function(event){
+  event.preventDefault();
+
+  const type=$("type").value;
+  const amount=Number($("amount").value);
+  const category=$("category").value;
+  const description=$("description").value.trim();
+  const date=$("date").value;
+
+  if(!Number.isFinite(amount)||
+     amount<=0||amount>1000000000||
+     !date||!category){
+   alert("Please enter valid details.");
+   return;
+  }
+
+  const transaction={
+   id:Date.now().toString(36)+
+      Math.random().toString(36).slice(2),
+   type,
+   amount:Math.round(amount*100)/100,
+   category,
+   description,
+   date
+  };
+
+  data.transactions.push(transaction);
+
+  if(save()){
+   $("selectedMonth").value=date.slice(0,7);
+   this.reset();
+   $("date").value=localDate();
+   updateCategories();
+   render();
+  }
+ }
+);
+
+$("selectedMonth").addEventListener(
+ "change",render
+);
+
+$("saveBudget").addEventListener("click",()=>{
+ const month=$("selectedMonth").value;
+ const raw=$("budgetInput").value;
+ const amount=Number(raw);
+
+ if(!month||raw===""||
+    !Number.isFinite(amount)||
+    amount<0||amount>1000000000){
+  alert("Enter a valid monthly budget.");
+  return;
+ }
+
+ data.budgets[month]=Math.round(amount*100)/100;
+ if(save())render();
+});
+
+function deleteTransaction(id){
+ if(!confirm("Delete this transaction?"))return;
+ data.transactions=data.transactions.filter(
+  item=>item.id!==id
+ );
+ if(save())render();
+}
+
+function render(){
+ const month=$("selectedMonth").value;
+
+ const items=data.transactions.filter(
+  t=>typeof t.date==="string"&&
+  t.date.startsWith(month)
+ );
+
+ const income=items
+  .filter(t=>t.type==="income")
+  .reduce((sum,t)=>sum+t.amount,0);
+
+ const expense=items
+  .filter(t=>t.type==="expense")
+  .reduce((sum,t)=>sum+t.amount,0);
+
+ const balance=income-expense;
+
+ $("income").textContent=money(income);
+ $("expense").textContent=money(expense);
+ $("balance").textContent=money(balance);
+
+ renderBudget(month,expense);
+ renderChart(items,expense);
+ renderTransactions(items);
+}
+
+function renderBudget(month,expense){
+ const budget=Number(data.budgets[month]||0);
+ $("budgetInput").value=
+  Object.prototype.hasOwnProperty.call(
+   data.budgets,month
+  )?data.budgets[month]:"";
+
+ const percent=budget>0?
+  expense/budget*100:0;
+
+ $("budgetBar").style.width=
+  Math.min(100,percent)+"%";
+
+ $("budgetBar").style.background=
+  expense>budget&&budget>0?
+  "#dc2626":"#4f46e5";
+
+ if(budget<=0){
+  $("budgetText").textContent="No budget set.";
+  $("budgetStatus").textContent=
+   "Set a monthly budget to track spending.";
+  return;
+ }
+
+ $("budgetText").textContent=
+  `${money(expense)} spent of ${money(budget)}`;
+
+ $("budgetStatus").textContent=
+  expense>budget?
+  `Over budget by ${money(expense-budget)}`:
+  `Remaining budget: ${money(budget-expense)}`;
+}
+
+function renderChart(items,totalExpense){
+ const chart=$("chart");
+ chart.replaceChildren();
+
+ const totals={};
+
+ items.filter(t=>t.type==="expense")
+  .forEach(t=>{
+   totals[t.category]=
+    (totals[t.category]||0)+t.amount;
+  });
+
+ const entries=Object.entries(totals)
+  .sort((a,b)=>b[1]-a[1]);
+
+ if(entries.length===0){
+  const empty=document.createElement("p");
+  empty.className="empty";
+  empty.textContent="No expenses for this month.";
+  chart.appendChild(empty);
+  return;
+ }
+
+ entries.forEach(([category,amount],index)=>{
+  const percent=totalExpense>0?
+   amount/totalExpense*100:0;
+
+  const row=document.createElement("div");
+  row.className="chart-row";
+
+  const label=document.createElement("div");
+  label.className="chart-label";
+
+  const name=document.createElement("span");
+  name.textContent=category;
+
+  const value=document.createElement("span");
+  value.textContent=
+   `${money(amount)} (${percent.toFixed(1)}%)`;
+
+  label.append(name,value);
+
+  const track=document.createElement("div");
+  track.className="bar-bg";
+
+  const fill=document.createElement("div");
+  fill.className="bar-fill";
+  fill.style.width=percent+"%";
+  fill.style.background=colors[index%colors.length];
+
+  track.appendChild(fill);
+  row.append(label,track);
+  chart.appendChild(row);
+ });
+}
+
+function renderTransactions(items){
+ const list=$("transactionList");
+ list.replaceChildren();
+
+ if(items.length===0){
+  const empty=document.createElement("p");
+  empty.className="empty";
+  empty.textContent="No transactions found.";
+  list.appendChild(empty);
+  return;
+ }
+
+ const sorted=[...items].sort(
+  (a,b)=>b.date.localeCompare(a.date)
+ );
+
+ sorted.forEach(item=>{
+  const row=document.createElement("div");
+  row.className="transaction";
+
+  const top=document.createElement("div");
+  top.className="row";
+
+  const details=document.createElement("div");
+
+  const title=document.createElement("strong");
+  title.textContent=
+   item.description||item.category;
+
+  const meta=document.createElement("small");
+  meta.textContent=
+   `${item.category} | ${item.date}`;
+
+  details.append(title,meta);
+
+  const amount=document.createElement("strong");
+  amount.className=
+   item.type==="income"?"green":"red";
+  amount.textContent=
+   (item.type==="income"?"+":"-")+
+   money(item.amount);
+
+  top.append(details,amount);
+
+  const remove=document.createElement("button");
+  remove.className="danger";
+  remove.textContent="Delete";
+  remove.onclick=()=>deleteTransaction(item.id);
+
+  row.append(top,remove);
+  list.appendChild(row);
+ });
+}
+
+$("exportButton").addEventListener("click",()=>{
+ const rows=[
+  ["Date","Type","Category","Description","Amount"]
+ ];
+
+ data.transactions.forEach(t=>{
+  rows.push([
+   t.date,t.type,t.category,
+   t.description,t.amount
+  ]);
+ });
+
+ const csv=rows.map(row=>
+  row.map(value=>{
+   let s=String(value??"");
+   if(/^[\s]*[=+\-@]/.test(s)){
+    s="'"+s;
+   }
+   return '"'+s.replace(/"/g,'""')+'"';
+  }).join(",")
+ ).join("\r\n");
+
+ const blob=new Blob(
+  ["\uFEFF"+csv],
+  {type:"text/csv;charset=utf-8"}
+ );
+
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="expense-transactions.csv";
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+$("clearButton").addEventListener("click",()=>{
+ if(!confirm(
+  "Delete all transactions and budgets?"
+ ))return;
+
+ data={transactions:[],budgets:{}};
+ if(save())render();
+});
+
+render();
+</script>
+
+</body>
+  </html>
+  
